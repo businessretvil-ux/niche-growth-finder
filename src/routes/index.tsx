@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { analyzeNiche, createNicheDoc } from "@/lib/niche.functions";
 import { judgeNiche, MIN_TICKET_USD } from "@/lib/niche-rules";
+import { buildApolloUrl, isApolloUrl, parseApolloKeywords } from "@/lib/apollo";
 import type { NicheReport } from "@/lib/niche-types";
 
 export const Route = createFileRoute("/")({
@@ -19,25 +20,70 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+const UNLOCK_KEY = "niche-finder-unlocked";
+const COUPON = "appointfunnels#58";
+const PLANS = [
+  { credits: 100, price: 20 },
+  { credits: 250, price: 40 },
+  { credits: 500, price: 75 },
+];
+
+function readUnlocked(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(UNLOCK_KEY) === "1" || document.cookie.includes("nf_unlocked=1");
+}
+
 function Index() {
   const analyze = useServerFn(analyzeNiche);
   const makeDoc = useServerFn(createNicheDoc);
   const [niche, setNiche] = useState("");
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<NicheReport | null>(null);
   const [doc, setDoc] = useState<{ url: string; documentId: string } | null>(null);
   const [docLoading, setDocLoading] = useState(false);
+  const [unlocked, setUnlocked] = useState(readUnlocked);
+  const [coupon, setCoupon] = useState("");
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
+  const [apolloPaste, setApolloPaste] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!loading) return;
+    setProgress(0);
+    const t = setInterval(() => setProgress((p) => Math.min(95, p + 1)), 300);
+    return () => clearInterval(t);
+  }, [loading]);
 
   async function run(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true); setError(null); setReport(null); setDoc(null);
+    setLoading(true); setError(null); setReport(null); setDoc(null); setApolloPaste("");
     try { setReport(await analyze({ data: { niche } })); }
     catch (err) { setError(err instanceof Error ? err.message : "Something went wrong"); }
-    finally { setLoading(false); }
+    finally { setLoading(false); setProgress(100); }
   }
 
   const verdict = report ? judgeNiche(report.avgTicketUsd, report.growth.isGrowing) : null;
+  const apolloKeywords = report ? [report.niche, ...report.subNiches] : [];
+  const apolloUrl = report ? buildApolloUrl(apolloKeywords) : "";
+  const pastedKeywords = parseApolloKeywords(apolloPaste);
+
+  function unlock() {
+    window.localStorage.setItem(UNLOCK_KEY, "1");
+    document.cookie = "nf_unlocked=1; max-age=31536000; path=/; SameSite=Lax";
+    setUnlocked(true);
+  }
+
+  function applyCoupon(e: React.FormEvent) {
+    e.preventDefault();
+    if (coupon.trim().toLowerCase() === COUPON) {
+      unlock();
+      setCouponMsg(null);
+    } else {
+      setCouponMsg("That coupon code isn't valid. Check it and try again.");
+    }
+  }
 
   async function exportDoc() {
     if (!report || !verdict) return;
@@ -46,6 +92,15 @@ function Index() {
     catch (err) { setError(err instanceof Error ? err.message : "Couldn't create the doc"); }
     finally { setDocLoading(false); }
   }
+
+  async function copyApollo() {
+    try { await navigator.clipboard.writeText(apolloUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    catch { setCopied(false); }
+  }
+
+  const paywall = (
+    <Paywall coupon={coupon} setCoupon={setCoupon} couponMsg={couponMsg} onCoupon={applyCoupon} />
+  );
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-12 md:py-20">
@@ -64,7 +119,14 @@ function Index() {
         </button>
       </form>
 
-      {loading && <p className="mt-8 animate-pulse text-center text-muted-foreground">Digging through the niche — this takes about 30–60 seconds…</p>}
+      {loading && (
+        <div className="mx-auto mt-8 max-w-2xl">
+          <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
+            <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="mt-2 text-center text-sm text-muted-foreground">Digging through the niche — the line fills in about 30 seconds, never more than a minute.</p>
+        </div>
+      )}
       {error && <p className="mx-auto mt-6 max-w-2xl rounded-xl border border-destructive/50 bg-destructive/10 p-4 text-center text-destructive">{error}</p>}
 
       {report && verdict && (
@@ -76,11 +138,12 @@ function Index() {
             <p className="mt-3 text-muted-foreground">{report.summary}</p>
           </div>
 
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <Stat label="Leads available" value={`~${report.leadCount.toLocaleString()}`} note={report.leadCountNote} tone="info" />
             <Stat label="Avg ticket size" value={`$${report.avgTicketUsd.toLocaleString()}`} note={report.avgTicketUsd >= MIN_TICKET_USD ? `Above $${MIN_TICKET_USD.toLocaleString()} ✓` : `Below $${MIN_TICKET_USD.toLocaleString()} ✗`} tone={report.avgTicketUsd >= MIN_TICKET_USD ? "success" : "destructive"} />
+            <Stat label="Availability" value={`${report.availability.filter((a) => a.available).length}/${report.availability.length} sources`} note={report.availability.filter((a) => a.available).map((a) => a.source).join(", ") || "No data sources"} tone="warning" />
+            <Stat label="Lead assets / pains" value={`${report.pains.length} pains`} note={report.pains[0]?.title ?? "No pains found"} tone="destructive" />
             <Stat label="Growth" value={report.growth.isGrowing ? "Growing 📈" : "Declining 📉"} note={report.growth.label} tone={report.growth.isGrowing ? "success" : "destructive"} />
-            <Stat label="Business model" value={report.businessModel} note="Who they sell to" tone="warning" />
           </section>
 
           <section className="grid gap-6 md:grid-cols-2">
@@ -92,10 +155,39 @@ function Index() {
             </Panel>
           </section>
 
+          <section className="rounded-3xl border border-border bg-card p-6 md:p-8">
+            <h2 className="text-2xl font-bold">🔎 Apollo lead filter <span className="text-primary">(United States)</span></h2>
+            <p className="mt-2 text-muted-foreground">A ready-made Apollo search for {report.niche} decision-makers in the United States — or paste your own Apollo link to pull its keywords out.</p>
+            {!unlocked ? paywall : (
+              <div className="mt-5 space-y-5">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <a href={apolloUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-3 font-display font-bold text-primary-foreground transition hover:scale-[1.02]">
+                    Open Apollo search ↗
+                  </a>
+                  <button onClick={copyApollo} className="rounded-2xl border border-border px-7 py-3 font-display font-bold transition hover:bg-secondary">
+                    {copied ? "Copied ✓" : "Copy link"}
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground">Keywords used: {apolloKeywords.join(", ")}</p>
+                <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+                  <p className="mb-2 font-semibold">Have your own Apollo link? Paste it to read its keywords:</p>
+                  <input value={apolloPaste} onChange={(e) => setApolloPaste(e.target.value)} placeholder="https://app.apollo.io/#/people?…"
+                    className="w-full rounded-xl bg-background px-4 py-3 text-sm outline-none placeholder:text-muted-foreground" />
+                  {apolloPaste && !isApolloUrl(apolloPaste) && <p className="mt-2 text-sm text-destructive">That doesn't look like an Apollo link.</p>}
+                  {pastedKeywords.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {pastedKeywords.map((k) => <span key={k} className="rounded-full bg-primary/15 px-4 py-1.5 text-sm text-primary">{k}</span>)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+
           <section className="rounded-3xl border border-primary/40 bg-card p-6 text-center md:p-8">
             <h2 className="text-2xl font-bold">📄 Get the full report in Google Docs</h2>
             <p className="mt-2 text-muted-foreground">A colourful, step-by-step breakdown you can share and edit.</p>
-            {!doc ? (
+            {!unlocked ? paywall : !doc ? (
               <button onClick={exportDoc} disabled={docLoading} className="mt-5 rounded-2xl bg-primary px-7 py-3 font-display font-bold text-primary-foreground transition hover:scale-[1.02] disabled:opacity-50">
                 {docLoading ? "Creating doc…" : "Create Google Doc"}
               </button>
@@ -116,13 +208,43 @@ function Index() {
   );
 }
 
+function Paywall({ coupon, setCoupon, couponMsg, onCoupon }: {
+  coupon: string;
+  setCoupon: (v: string) => void;
+  couponMsg: string | null;
+  onCoupon: (e: React.FormEvent) => void;
+}) {
+  const [note, setNote] = useState<string | null>(null);
+  return (
+    <div className="mt-5 rounded-2xl border border-warning/40 bg-warning/5 p-5 text-left">
+      <p className="flex items-center gap-2 font-display text-lg font-bold text-warning">🔒 Locked — pick a plan to unlock</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {PLANS.map((p) => (
+          <button key={p.credits} onClick={() => setNote("Card payments switch on at launch — until then, use your coupon code below for free unlimited access.")}
+            className="rounded-2xl border border-border bg-card p-4 text-center transition hover:border-primary">
+            <p className="font-display text-2xl font-bold text-primary">${p.price}<span className="text-sm text-muted-foreground">/mo</span></p>
+            <p className="mt-1 text-sm text-muted-foreground">{p.credits} credits</p>
+          </button>
+        ))}
+      </div>
+      {note && <p className="mt-3 text-sm text-warning">{note}</p>}
+      <form onSubmit={onCoupon} className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <input value={coupon} onChange={(e) => setCoupon(e.target.value)} placeholder="Have a coupon code?"
+          className="flex-1 rounded-xl bg-background px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground" />
+        <button className="rounded-xl bg-primary px-5 py-2.5 font-display text-sm font-bold text-primary-foreground">Apply coupon</button>
+      </form>
+      {couponMsg && <p className="mt-2 text-sm text-destructive">{couponMsg}</p>}
+    </div>
+  );
+}
+
 const toneText = { info: "text-info", success: "text-success", destructive: "text-destructive", warning: "text-warning" } as const;
 
 function Stat({ label, value, note, tone }: { label: string; value: string; note: string; tone: keyof typeof toneText }) {
   return (
     <div className="rounded-3xl border border-border bg-card p-5">
       <p className="text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={`mt-2 font-display text-3xl font-bold ${toneText[tone]}`}>{value}</p>
+      <p className={`mt-2 font-display text-2xl font-bold ${toneText[tone]}`}>{value}</p>
       <p className="mt-1 text-sm text-muted-foreground">{note}</p>
     </div>
   );
@@ -174,7 +296,11 @@ function Report({ r }: { r: NicheReport }) {
         </div>
         <p>This is a <b>{r.tickets.tier}</b> ticket niche.</p>
       </Sec>
-      <Sec title="📊 How big is the market?"><p>{r.market.summary}</p><List items={r.market.drivers} /></Sec>
+      <Sec title="📊 How big is the market?">
+        <p className="font-display text-3xl font-bold text-success">~${r.marketSizeBillions}B <span className="text-base font-normal text-muted-foreground">billion USD market</span></p>
+        <p>{r.market.summary}</p>
+        <List items={r.market.drivers} />
+      </Sec>
       <Sec title="😡 Pain level">{r.pains.map((p) => <div key={p.title} className="border-l-4 border-destructive pl-4"><p className="font-bold">{p.title}</p><p className="text-muted-foreground">{p.detail}</p></div>)}</Sec>
       <Sec title="⚙️ Core sales systems they need">
         <div className="grid gap-4 md:grid-cols-3">
