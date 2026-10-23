@@ -52,6 +52,7 @@ Rules:
 - products: exactly these 5 in order: "AI Receptionist", "AI Sales Systems", "AI SDR", "Cold Email Infrastructure", "Full Operating System". fit=true only if it genuinely makes sense.
 - whatTheyDo, theyManage: 5 items each. sells: 4 offers (recurring retainer, high-ticket project, specialized/compliance, consulting). pains: 3. subNiches: 3-5. pros/cons: 3 each. salesSystems lists: 2-3 items each. helpThem: 4 items.
 - positioning: one punchy offer line like "AI Sales Systems & High-Velocity Lead Generation for X".
+- All "note" fields (leadCountNote, ticketNote, availability notes, product reasons): one short sentence, max 20 words.
 Be specific to the niche, not generic.`;
 
 export const analyzeNiche = createServerFn({ method: "POST" })
