@@ -17,9 +17,10 @@ const schema = obj({
   summary: str,
   leadCount: num,
   leadCountNote: str,
+  marketSizeBillions: num,
   avgTicketUsd: num,
   ticketNote: str,
-  businessModel: { type: "string", enum: ["B2B", "B2C", "Both"] },
+  businessModel: { type: "string", enum: ["B2B", "B2C", "B2B + B2C"] },
   growth: obj({ isGrowing: bool, label: str, reason: str }),
   availability: arr(obj({ source: str, available: bool, note: str })),
   products: arr(obj({ name: str, fit: bool, reason: str })),
@@ -46,7 +47,9 @@ const SYSTEM = `You are an elite B2B Offer Architect and AI Automation Agency co
 Perform an exhaustive, honest breakdown of the niche for an agency selling AI Receptionists, AI Sales Systems, AI SDRs, Cold Email Infrastructure and Full Business Operating Systems.
 Rules:
 - leadCount: realistic estimate of reachable businesses worldwide (mainly US/UK/CA/AU) as a number.
+- marketSizeBillions: total market size of the niche in billions of USD (number, e.g. 12.5). Be realistic; do not inflate.
 - avgTicketUsd: the average deal/contract value these businesses charge THEIR clients, in USD (number). Be realistic; do not inflate.
+- businessModel: "B2B", "B2C", or "B2B + B2C" when they sell to both. Never use the word "Both".
 - growth: be honest. Dying niches (e.g. generic graphic designers replaced by AI) must be isGrowing=false.
 - availability: exactly these sources in order: "Apollo", "Google Maps", "LinkedIn Sales Navigator", "Industry directories".
 - products: exactly these 5 in order: "AI Receptionist", "AI Sales Systems", "AI SDR", "Cold Email Infrastructure", "Full Operating System". fit=true only if it genuinely makes sense.
@@ -149,6 +152,7 @@ function buildSegments(r: NicheReport, good: boolean, reasons: string[]): Seg[] 
   h("📋 Core Filters", C.orange);
   b([
     `Leads available: ~${r.leadCount.toLocaleString()} (${r.leadCountNote})`,
+    `Market size: ~$${r.marketSizeBillions}B (billion USD)`,
     `Average ticket size: $${r.avgTicketUsd.toLocaleString()} (${r.ticketNote})`,
     `Business model: ${r.businessModel}`,
     `Growth: ${r.growth.label} — ${r.growth.reason}`,
