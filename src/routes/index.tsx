@@ -243,20 +243,20 @@ function Report({ r }: { r: NicheReport }) {
       <Sec title={`📂 What do ${n} companies do?`}><List items={r.whatTheyDo} /><p className="text-muted-foreground">They protect / manage / build:</p><List items={r.theyManage} /></Sec>
       <Sec title="📦 What do they sell?">
         <div className="grid gap-4 md:grid-cols-2">{r.sells.map((o, i) => (
-          <div key={o.title} className="rounded-2xl bg-secondary p-5"><p className="font-display font-bold text-primary">{i + 1}. {o.title}</p><div className="mt-2"><List items={o.items} /></div><p className="mt-2 text-sm italic text-muted-foreground">👉 {o.note}</p></div>
+          <div key={o.title} className="rounded-2xl bg-secondary p-5"><p className="font-display font-bold text-foreground">{i + 1}. {o.title}</p><div className="mt-2"><List items={o.items} /></div><p className="mt-2 text-sm italic text-muted-foreground">👉 {o.note}</p></div>
         ))}</div>
       </Sec>
       <Sec title="🎯 Who do they sell to?"><List items={r.sellTo} /><p className="font-semibold">Basically: “{r.idealCustomer}”</p></Sec>
       <Sec title="💰 Ticket size">
         <div className="grid gap-3 sm:grid-cols-3">
           {[["Small", r.tickets.small], ["Mid", r.tickets.mid], ["Enterprise", r.tickets.enterprise]].map(([k, v]) => (
-            <div key={k} className="rounded-2xl bg-secondary p-4"><p className="text-xs uppercase text-muted-foreground">{k}</p><p className="font-display text-lg font-bold text-success">{v}</p></div>
+            <div key={k} className="rounded-2xl bg-secondary p-4"><p className="text-xs uppercase text-muted-foreground">{k}</p><p className="font-display text-lg font-bold text-foreground">{v}</p></div>
           ))}
         </div>
         <p>This is a <b>{r.tickets.tier}</b> ticket niche.</p>
       </Sec>
       <Sec title="📊 How big is the market?">
-        <p className="font-display text-3xl font-bold text-success">~${r.marketSizeBillions}B <span className="text-base font-normal text-muted-foreground">billion USD market</span></p>
+        <p className="font-display text-3xl font-bold text-foreground">~${r.marketSizeBillions}B <span className="text-base font-normal text-muted-foreground">billion USD market</span></p>
         <p>{r.market.summary}</p>
         <List items={r.market.drivers} />
       </Sec>
@@ -264,7 +264,7 @@ function Report({ r }: { r: NicheReport }) {
       <Sec title="⚙️ Core sales systems they need">
         <div className="grid gap-4 md:grid-cols-3">
           {[["AI SDR Systems", r.salesSystems.aiSdr], ["Cold Email Infrastructure", r.salesSystems.coldEmail], ["AI Lead Tracking", r.salesSystems.leadTracking]].map(([t, items]) => (
-            <div key={t as string} className="rounded-2xl bg-secondary p-5"><p className="mb-2 font-display font-bold text-info">{t as string}</p><List items={items as string[]} /></div>
+            <div key={t as string} className="rounded-2xl bg-secondary p-5"><p className="mb-2 font-display font-bold text-foreground">{t as string}</p><List items={items as string[]} /></div>
           ))}
         </div>
       </Sec>
@@ -273,12 +273,12 @@ function Report({ r }: { r: NicheReport }) {
       <Sec title={`🦄 Sub-niches inside ${n}`}><div className="flex flex-wrap gap-2">{r.subNiches.map((s) => <span key={s} className="rounded-full bg-accent px-4 py-1.5 font-medium text-primary">{s}</span>)}</div></Sec>
       <Sec title="🤼 Pros & cons">
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-success/10 p-5"><p className="mb-2 font-bold text-success">🟩 Pros</p><List items={r.pros} /></div>
-          <div className="rounded-2xl bg-destructive/10 p-5"><p className="mb-2 font-bold text-destructive">🟥 Cons</p><List items={r.cons} /></div>
+          <div className="rounded-2xl bg-success/10 p-5"><p className="mb-2 font-bold text-foreground">🟩 Pros</p><List items={r.pros} /></div>
+          <div className="rounded-2xl bg-destructive/10 p-5"><p className="mb-2 font-bold text-foreground">🟥 Cons</p><List items={r.cons} /></div>
         </div>
         <p>Difficulty: <b>{r.difficulty}</b></p>
       </Sec>
-      <Sec title="🛞 Is it good for AI automation?"><p className="rounded-2xl bg-accent p-4 font-display text-xl font-bold text-primary">“{r.positioning}”</p><List items={r.helpThem} /></Sec>
+      <Sec title="🛞 Is it good for AI automation?"><p className="rounded-2xl bg-secondary p-4 font-display text-xl font-bold text-foreground">“{r.positioning}”</p><List items={r.helpThem} /></Sec>
     </div>
   );
 }
