@@ -52,7 +52,7 @@ Rules:
 - businessModel: "B2B", "B2C", or "B2B + B2C" when they sell to both. Never use the word "Both".
 - growth: be honest. Dying niches (e.g. generic graphic designers replaced by AI) must be isGrowing=false.
 - availability: exactly these sources in order: "Apollo", "Google Maps", "LinkedIn Sales Navigator", "Industry directories".
-- products: exactly these 5 in order: "AI Receptionist", "AI Sales Systems", "AI SDR", "Cold Email Infrastructure", "Full Operating System". fit=true only if it genuinely makes sense.
+- products: exactly these 6 in order: "AI Receptionist", "AI Sales Systems", "AI SDR", "Cold Email Infrastructure", "Full Operating System", "Meta Ads + Full Lead To Client Automation System". fit=true only if it genuinely makes sense.
 - whatTheyDo, theyManage: 5 items each. sells: 4 offers (recurring retainer, high-ticket project, specialized/compliance, consulting). pains: 3. subNiches: 3-5. pros/cons: 3 each. salesSystems lists: 2-3 items each. helpThem: 4 items.
 - positioning: one punchy offer line like "AI Sales Systems & High-Velocity Lead Generation for X".
 - All "note" fields (leadCountNote, ticketNote, availability notes, product reasons): one short sentence, max 20 words.
@@ -158,7 +158,7 @@ function buildSegments(r: NicheReport, good: boolean, reasons: string[]): Seg[] 
     `Growth: ${r.growth.label} — ${r.growth.reason}`,
     ...r.availability.map((a) => `${a.available ? "✅" : "❌"} ${a.source}: ${a.note}`),
   ]);
-  h3("Products you can sell them");
+  h3("Products you can sell them (6 offers)");
   b(r.products.map((x) => `${x.fit ? "✅" : "❌"} ${x.name}: ${x.reason}`));
 
   s.push({ text: n, kind: "h1", color: C.ink });
