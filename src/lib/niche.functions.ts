@@ -228,6 +228,39 @@ function buildSegments(r: NicheReport, good: boolean, reasons: string[]): Seg[] 
   return s;
 }
 
+// Hosted on Lovable: use the connected Google account. Hosted elsewhere (e.g. Vercel):
+// use GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN for your own Google account.
+async function googleDocsTarget(): Promise<{ GATEWAY: string; headers: Record<string, string> }> {
+  const lovableKey = process.env['LOVABLE_API_KEY'];
+  const gd = process.env['GOOGLE_DOCS_API_KEY'];
+  if (lovableKey && gd) {
+    return {
+      GATEWAY: "https://connector-gateway.lovable.dev/google_docs/v1",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": gd },
+    };
+  }
+  const clientId = process.env['GOOGLE_CLIENT_ID'];
+  const clientSecret = process.env['GOOGLE_CLIENT_SECRET'];
+  const refreshToken = process.env['GOOGLE_REFRESH_TOKEN'];
+  if (!clientId || !clientSecret || !refreshToken)
+    throw new Error("Google Docs is not connected. Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REFRESH_TOKEN to your hosting environment variables.");
+  const tok = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken, grant_type: "refresh_token" }),
+  });
+  if (!tok.ok) {
+    const t = await tok.text();
+    console.error(`Google token refresh failed [${tok.status}]: ${t}`);
+    throw new Error(`Couldn't sign in to Google (${tok.status}). Check your Google keys.`);
+  }
+  const { access_token } = (await tok.json()) as { access_token: string };
+  return {
+    GATEWAY: "https://docs.googleapis.com/v1",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${access_token}` },
+  };
+}
+
 export const createNicheDoc = createServerFn({ method: "POST" })
   .inputValidator((input: { report: NicheReport; good: boolean; reasons: string[] }) => {
     if (!input?.report?.niche) throw new Error("Missing report.");
