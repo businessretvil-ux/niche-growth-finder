@@ -3,9 +3,10 @@ export type NicheReport = {
   summary: string;
   leadCount: number;
   leadCountNote: string;
+  marketSizeBillions: number;
   avgTicketUsd: number;
   ticketNote: string;
-  businessModel: "B2B" | "B2C" | "Both";
+  businessModel: "B2B" | "B2C" | "B2B + B2C";
   growth: { isGrowing: boolean; label: string; reason: string };
   availability: { source: string; available: boolean; note: string }[];
   products: { name: string; fit: boolean; reason: string }[];
