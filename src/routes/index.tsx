@@ -84,8 +84,8 @@ function Index() {
       <UnlockOverlay show={showUnlockAnim} />
       <main className="mx-auto max-w-6xl px-5 py-12 md:py-20">
         <header className="mb-10 text-center">
-          <p className="mb-3 inline-block rounded-full border border-primary/30 bg-accent px-4 py-1 text-xs font-semibold uppercase tracking-widest text-primary">Niche Finder</p>
-          <h1 className="text-4xl font-bold leading-tight md:text-6xl">Is this niche <span className="text-primary">worth it?</span></h1>
+          <p className="mb-3 inline-block rounded-full border border-border bg-secondary px-4 py-1 text-xs font-semibold uppercase tracking-widest text-foreground">Niche Finder</p>
+          <h1 className="text-4xl font-bold leading-tight md:text-6xl">Is this niche worth it?</h1>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">Type any niche. Get leads, ticket size, growth and which AI offers you can sell them.</p>
         </header>
 
@@ -111,18 +111,18 @@ function Index() {
         {report && verdict && (
           <div className="mt-12 space-y-10">
             <div className={`rounded-3xl border p-6 md:p-8 ${verdict.good ? "border-success/50 bg-success/10" : "border-destructive/50 bg-destructive/10"}`}>
-              <p className={`font-display text-sm uppercase tracking-widest ${verdict.good ? "text-success" : "text-destructive"}`}>Verdict</p>
+              <p className="font-display text-sm uppercase tracking-widest text-muted-foreground">Verdict</p>
               <h2 className="mt-1 text-3xl font-bold md:text-4xl">{verdict.good ? `✅ ${report.niche} is a good niche` : `❌ Skip ${report.niche}`}</h2>
               {!verdict.good && <ul className="mt-2 text-destructive">{verdict.reasons.map((r) => <li key={r}>• {r}</li>)}</ul>}
               <p className="mt-3 text-muted-foreground">{report.summary}</p>
             </div>
 
             <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <Stat label="Leads available" value={`~${report.leadCount.toLocaleString()}`} note={report.leadCountNote} tone="info" />
-              <Stat label="Avg ticket size" value={`$${report.avgTicketUsd.toLocaleString()}`} note={report.avgTicketUsd >= MIN_TICKET_USD ? `Above $${MIN_TICKET_USD.toLocaleString()} ✓` : `Below $${MIN_TICKET_USD.toLocaleString()} ✗`} tone={report.avgTicketUsd >= MIN_TICKET_USD ? "success" : "destructive"} />
-              <Stat label="Availability" value={`${report.availability.filter((a) => a.available).length}/${report.availability.length} sources`} note={report.availability.filter((a) => a.available).map((a) => a.source).join(", ") || "No data sources"} tone="info" />
-              <Stat label="Lead assets / pains" value={`${report.pains.length} pains`} note={report.pains[0]?.title ?? "No pains found"} tone="destructive" />
-              <Stat label="Growth" value={report.growth.isGrowing ? "Growing 📈" : "Declining 📉"} note={report.growth.label} tone={report.growth.isGrowing ? "success" : "destructive"} />
+              <Stat label="Leads available" value={`~${report.leadCount.toLocaleString()}`} note={report.leadCountNote} />
+              <Stat label="Avg ticket size" value={`$${report.avgTicketUsd.toLocaleString()}`} note={report.avgTicketUsd >= MIN_TICKET_USD ? `Above $${MIN_TICKET_USD.toLocaleString()} ✓` : `Below $${MIN_TICKET_USD.toLocaleString()} ✗`} />
+              <Stat label="Availability" value={`${report.availability.filter((a) => a.available).length}/${report.availability.length} sources`} note={report.availability.filter((a) => a.available).map((a) => a.source).join(", ") || "No data sources"} />
+              <Stat label="Lead assets / pains" value={`${report.pains.length} pains`} note={report.pains[0]?.title ?? "No pains found"} />
+              <Stat label="Growth" value={report.growth.isGrowing ? "Growing 📈" : "Declining 📉"} note={report.growth.label} />
             </section>
 
             <section className="grid gap-6 md:grid-cols-2">
@@ -135,7 +135,7 @@ function Index() {
             </section>
 
             <section className="rounded-3xl border border-border bg-card p-6 md:p-8">
-              <h2 className="text-2xl font-bold">🔎 Apollo lead filter <span className="text-primary">(United States)</span></h2>
+              <h2 className="text-2xl font-bold">🔎 Apollo lead filter (United States)</h2>
               <p className="mt-2 text-muted-foreground">A ready-made Apollo search for {report.niche} decision-makers in the United States — or paste your own Apollo link to pull its keywords out.</p>
               <BlurLock locked={!unlocked} onUnlock={unlock}>
                 <div className="mt-5 space-y-5">
@@ -199,13 +199,11 @@ function Index() {
   );
 }
 
-const toneText = { info: "text-info", success: "text-success", destructive: "text-destructive" } as const;
-
-function Stat({ label, value, note, tone }: { label: string; value: string; note: string; tone: keyof typeof toneText }) {
+function Stat({ label, value, note }: { label: string; value: string; note: string }) {
   return (
     <div className="rounded-3xl border border-border bg-card p-5">
       <p className="text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={`mt-2 font-display text-2xl font-bold ${toneText[tone]}`}>{value}</p>
+      <p className="mt-2 font-display text-2xl font-bold text-foreground">{value}</p>
       <p className="mt-1 text-sm text-muted-foreground">{note}</p>
     </div>
   );
