@@ -51,8 +51,8 @@ function Pricing() {
       <UnlockOverlay show={showUnlockAnim} />
       <main className="mx-auto max-w-6xl px-5 py-12 md:py-20">
         <header className="mb-12 text-center">
-          <p className="mb-3 inline-block rounded-full border border-primary/30 bg-accent px-4 py-1 text-xs font-semibold uppercase tracking-widest text-primary">Pricing</p>
-          <h1 className="text-4xl font-bold leading-tight md:text-6xl">One tool. <span className="text-primary">Every niche.</span></h1>
+          <p className="mb-3 inline-block rounded-full border border-border bg-secondary px-4 py-1 text-xs font-semibold uppercase tracking-widest text-foreground">Pricing</p>
+          <h1 className="text-4xl font-bold leading-tight md:text-6xl">One tool. Every niche.</h1>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">Pick a monthly plan and start analyzing niches in under a minute. One unlock covers the Apollo filter and the Google Doc report.</p>
           {unlocked && <p className="mx-auto mt-4 inline-block rounded-full bg-success/10 px-5 py-2 font-semibold text-success">🔓 You have unlimited access on this browser</p>}
         </header>
@@ -63,7 +63,7 @@ function Pricing() {
               {p.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-widest text-primary-foreground">Most popular</span>}
               <h2 className="font-display text-xl font-bold">{p.name}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{p.blurb}</p>
-              <p className="mt-4 font-display text-5xl font-bold text-primary">${p.price}<span className="text-base font-normal text-muted-foreground">/month</span></p>
+              <p className="mt-4 font-display text-5xl font-bold text-foreground">${p.price}<span className="text-base font-normal text-muted-foreground">/month</span></p>
               <p className="mt-1 text-sm font-semibold">{p.credits} credits included</p>
               <ul className="mt-5 flex-1 space-y-2.5 text-sm">
                 {p.features.map((f) => (
@@ -95,7 +95,7 @@ function Pricing() {
           <div className="mt-6 space-y-3">
             {FAQ.map((f) => (
               <details key={f.q} className="group rounded-2xl border border-border bg-card p-5">
-                <summary className="cursor-pointer list-none font-display font-bold">{f.q}<span className="float-right text-primary transition group-open:rotate-45">＋</span></summary>
+                <summary className="cursor-pointer list-none font-display font-bold">{f.q}<span className="float-right text-muted-foreground transition group-open:rotate-45">＋</span></summary>
                 <p className="mt-2 text-sm text-muted-foreground">{f.a}</p>
               </details>
             ))}
