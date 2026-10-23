@@ -65,25 +65,33 @@ export const analyzeNiche = createServerFn({ method: "POST" })
     return { niche };
   })
   .handler(async ({ data }): Promise<NicheReport> => {
-    const key = process.env['LOVABLE_API_KEY'];
-    if (!key) throw new Error("AI is not configured.");
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Lovable-API-Key": key,
-        "X-Lovable-AIG-SDK": "fetch",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-6-astra",
-        stream: true,
-        store: false,
-        reasoning: { effort: "low" },
-        instructions: SYSTEM,
-        input: `INPUT NICHE TO ANALYZE: ${data.niche}`,
-        text: { format: { type: "json_schema", name: "niche_report", strict: true, schema } },
-      }),
-    });
+    // Hosted on Lovable: use the built-in AI. Hosted elsewhere (e.g. Vercel): use OPENAI_API_KEY.
+    const lovableKey = process.env['LOVABLE_API_KEY'];
+    const openaiKey = process.env['OPENAI_API_KEY'];
+    if (!lovableKey && !openaiKey)
+      throw new Error("AI is not configured. Add OPENAI_API_KEY to your hosting environment variables.");
+    const common = {
+      stream: true,
+      store: false,
+      instructions: SYSTEM,
+      input: `INPUT NICHE TO ANALYZE: ${data.niche}`,
+      text: { format: { type: "json_schema", name: "niche_report", strict: true, schema } },
+    };
+    const res = lovableKey
+      ? await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Lovable-API-Key": lovableKey,
+            "X-Lovable-AIG-SDK": "fetch",
+          },
+          body: JSON.stringify({ model: "openai/gpt-6-astra", reasoning: { effort: "low" }, ...common }),
+        })
+      : await fetch("https://api.openai.com/v1/responses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+          body: JSON.stringify({ model: process.env['OPENAI_MODEL'] || "gpt-4.1", ...common }),
+        });
     if (!res.ok || !res.body) {
       const body = await res.text();
       console.error(`AI request failed [${res.status}]: ${body}`);
@@ -220,21 +228,46 @@ function buildSegments(r: NicheReport, good: boolean, reasons: string[]): Seg[] 
   return s;
 }
 
+// Hosted on Lovable: use the connected Google account. Hosted elsewhere (e.g. Vercel):
+// use GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN for your own Google account.
+async function googleDocsTarget(): Promise<{ GATEWAY: string; headers: Record<string, string> }> {
+  const lovableKey = process.env['LOVABLE_API_KEY'];
+  const gd = process.env['GOOGLE_DOCS_API_KEY'];
+  if (lovableKey && gd) {
+    return {
+      GATEWAY: "https://connector-gateway.lovable.dev/google_docs/v1",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": gd },
+    };
+  }
+  const clientId = process.env['GOOGLE_CLIENT_ID'];
+  const clientSecret = process.env['GOOGLE_CLIENT_SECRET'];
+  const refreshToken = process.env['GOOGLE_REFRESH_TOKEN'];
+  if (!clientId || !clientSecret || !refreshToken)
+    throw new Error("Google Docs is not connected. Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REFRESH_TOKEN to your hosting environment variables.");
+  const tok = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken, grant_type: "refresh_token" }),
+  });
+  if (!tok.ok) {
+    const t = await tok.text();
+    console.error(`Google token refresh failed [${tok.status}]: ${t}`);
+    throw new Error(`Couldn't sign in to Google (${tok.status}). Check your Google keys.`);
+  }
+  const { access_token } = (await tok.json()) as { access_token: string };
+  return {
+    GATEWAY: "https://docs.googleapis.com/v1",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${access_token}` },
+  };
+}
+
 export const createNicheDoc = createServerFn({ method: "POST" })
   .inputValidator((input: { report: NicheReport; good: boolean; reasons: string[] }) => {
     if (!input?.report?.niche) throw new Error("Missing report.");
     return input;
   })
   .handler(async ({ data }) => {
-    const LOVABLE_API_KEY = process.env['LOVABLE_API_KEY'];
-    const GD = process.env['GOOGLE_DOCS_API_KEY'];
-    if (!LOVABLE_API_KEY || !GD) throw new Error("Google Docs is not connected.");
-    const GATEWAY = "https://connector-gateway.lovable.dev/google_docs/v1";
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": GD,
-    };
+    const { GATEWAY, headers } = await googleDocsTarget();
     const created = await fetch(`${GATEWAY}/documents`, {
       method: "POST",
       headers,
