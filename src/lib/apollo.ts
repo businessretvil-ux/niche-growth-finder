@@ -37,7 +37,7 @@ export function parseApolloKeywords(url: string): string[] {
   const re = /qOrganizationKeywordTags(?:%5B%5D|\[\])=([^&#]*)/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(url)) !== null) {
-    const kw = decodeURIComponent(m[1].replace(/\+/g, " ")).trim();
+    const kw = decodeURIComponent((m[1] ?? "").replace(/\+/g, " ")).trim();
     if (kw && !out.includes(kw)) out.push(kw);
   }
   return out;
