@@ -25,7 +25,7 @@ export function Paywall({ onUnlock, compact = false }: { onUnlock: () => void; c
         {PLANS.map((p) => (
           <button key={p.id} onClick={() => setNote("Card payments switch on at launch — until then, use your coupon code below for free unlimited access.")}
             className={`rounded-2xl border bg-background p-4 text-center transition hover:border-primary ${p.popular ? "border-primary" : "border-border"}`}>
-            <p className="font-display text-2xl font-bold text-primary">${p.price}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+            <p className="font-display text-2xl font-bold text-foreground">${p.price}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
             <p className="mt-1 text-sm text-muted-foreground">{p.credits} credits</p>
           </button>
         ))}
