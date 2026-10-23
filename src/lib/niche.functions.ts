@@ -62,7 +62,7 @@ export const analyzeNiche = createServerFn({ method: "POST" })
     return { niche };
   })
   .handler(async ({ data }): Promise<NicheReport> => {
-    const key = process.env.LOVABLE_API_KEY;
+    const key = process.env['LOVABLE_API_KEY'];
     if (!key) throw new Error("AI is not configured.");
     const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
       method: "POST",
@@ -222,8 +222,8 @@ export const createNicheDoc = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data }) => {
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    const GD = process.env.GOOGLE_DOCS_API_KEY;
+    const LOVABLE_API_KEY = process.env['LOVABLE_API_KEY'];
+    const GD = process.env['GOOGLE_DOCS_API_KEY'];
     if (!LOVABLE_API_KEY || !GD) throw new Error("Google Docs is not connected.");
     const GATEWAY = "https://connector-gateway.lovable.dev/google_docs/v1";
     const headers = {
@@ -268,8 +268,8 @@ export const createNicheDoc = createServerFn({ method: "POST" })
         const ts: Record<string, unknown> = { foregroundColor: { color: { rgbColor: { red, green, blue } } }, bold: true };
         let fields = "foregroundColor,bold";
         if (seg.kind === "callout") {
-          ts.backgroundColor = { color: { rgbColor: { red: 0.96, green: 0.95, blue: 0.88 } } };
-          ts.fontSize = { magnitude: 14, unit: "PT" };
+          ts['backgroundColor'] = { color: { rgbColor: { red: 0.96, green: 0.95, blue: 0.88 } } };
+          ts['fontSize'] = { magnitude: 14, unit: "PT" };
           fields += ",backgroundColor,fontSize";
         }
         styles.push({ updateTextStyle: { range: { startIndex: start, endIndex: end - 1 }, textStyle: ts, fields } });
