@@ -1,4 +1,4 @@
-export function selectAiProvider(keys: { openai?: string; lovable?: string }): "openai" | "lovable" {
+export function selectAiProvider(keys: { openai?: string | undefined; lovable?: string | undefined }): "openai" | "lovable" {
   if (keys.openai) return "openai";
   if (keys.lovable) return "lovable";
   throw new Error("AI is not configured. Add OPENAI_API_KEY in your hosting environment and redeploy.");
