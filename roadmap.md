@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Restrict all niche analysis calls to GPT-6 Luna and verify the result
+- [x] Restrict all niche analysis calls to GPT-6 Luna and verify the result
 
 - [x] Use the supplied OpenAI key and Google OAuth credential names
 - [x] Verify a real niche analysis with the supplied OpenAI key
