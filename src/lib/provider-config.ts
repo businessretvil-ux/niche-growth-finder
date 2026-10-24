@@ -1,3 +1,7 @@
+export function nicheAiModel(provider: "openai" | "lovable") {
+  return provider === "lovable" ? "openai/gpt-6-luna" : "gpt-6-luna";
+}
+
 export function selectAiProvider(keys: { openai?: string | undefined; lovable?: string | undefined }): "openai" | "lovable" {
   if (keys.openai) return "openai";
   if (keys.lovable) return "lovable";

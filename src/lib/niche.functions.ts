@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { NicheReport } from "./niche-types";
-import { resolveGoogleCredentials, selectAiProvider } from "./provider-config";
+import { nicheAiModel, resolveGoogleCredentials, selectAiProvider } from "./provider-config";
 
 const str = { type: "string" } as const;
 const num = { type: "number" } as const;
@@ -71,8 +71,11 @@ export const analyzeNiche = createServerFn({ method: "POST" })
     const openaiKey = process.env['OPENAI_API_KEY'];
     const provider = selectAiProvider({ openai: openaiKey, lovable: lovableKey });
     const common = {
+      model: nicheAiModel(provider),
       stream: true,
       store: false,
+      reasoning: { effort: "low", summary: "auto" },
+      include: ["reasoning.encrypted_content"],
       instructions: SYSTEM,
       input: `INPUT NICHE TO ANALYZE: ${data.niche}`,
       text: { format: { type: "json_schema", name: "niche_report", strict: true, schema } },
@@ -85,18 +88,19 @@ export const analyzeNiche = createServerFn({ method: "POST" })
              "Lovable-API-Key": lovableKey ?? "",
             "X-Lovable-AIG-SDK": "fetch",
           },
-          body: JSON.stringify({ model: "openai/gpt-6-astra", reasoning: { effort: "low" }, ...common }),
+          body: JSON.stringify(common),
         })
       : await fetch("https://api.openai.com/v1/responses", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-          body: JSON.stringify({ model: process.env['OPENAI_MODEL'] || "gpt-4.1", ...common }),
+          body: JSON.stringify(common),
         });
     if (!res.ok || !res.body) {
       const body = await res.text();
       console.error(`AI request failed [${res.status}]: ${body}`);
       if (res.status === 402) throw new Error("AI credits ran out. Add credits to keep analyzing.");
       if (res.status === 429) throw new Error("Too many requests right now. Try again in a minute.");
+      if (res.status === 404) throw new Error("GPT-6 Luna is unavailable for this AI account. No other model was used.");
       throw new Error(`AI request failed (${res.status}).`);
     }
     const reader = res.body.getReader();

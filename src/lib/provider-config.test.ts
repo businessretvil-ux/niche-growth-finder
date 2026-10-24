@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { resolveGoogleCredentials, selectAiProvider } from "./provider-config";
+import { nicheAiModel, resolveGoogleCredentials, selectAiProvider } from "./provider-config";
 
 describe("hosting credentials", () => {
+  it("uses only GPT-6 Luna with the user's OpenAI key", () => {
+    expect(nicheAiModel("openai")).toBe("gpt-6-luna");
+  });
+  it("uses only GPT-6 Luna on the built-in gateway", () => {
+    expect(nicheAiModel("lovable")).toBe("openai/gpt-6-luna");
+  });
   it("uses the supplied OpenAI key even when built-in AI is available", () => {
     expect(selectAiProvider({ openai: "test-openai", lovable: "test-lovable" })).toBe("openai");
   });

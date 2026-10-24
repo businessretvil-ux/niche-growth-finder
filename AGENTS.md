@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Resolve hosting credential names through the browser-safe provider-config module, with supplied OpenAI credentials taking precedence; this keeps deployment behavior consistent and testable without accessing real secrets in tests.
+- Keep model selection in provider-config and do not accept environment model overrides, so every hosting path enforces the same model policy.
