@@ -1,7 +1,7 @@
 # Roadmap
 
-- [ ] Use the supplied OpenAI key and Google OAuth credential names
-- [ ] Verify a real niche analysis with the supplied OpenAI key
+- [x] Use the supplied OpenAI key and Google OAuth credential names
+- [x] Verify a real niche analysis with the supplied OpenAI key
 - [ ] Enable Google Docs on Vercel (requires Google refresh token and Vercel environment setup)
 
 - [x] Apollo URL keyword reader (paste URL → extract niche keywords)
