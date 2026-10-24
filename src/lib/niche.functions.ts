@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { NicheReport } from "./niche-types";
+import { resolveGoogleCredentials, selectAiProvider } from "./provider-config";
 
 const str = { type: "string" } as const;
 const num = { type: "number" } as const;
@@ -65,11 +66,10 @@ export const analyzeNiche = createServerFn({ method: "POST" })
     return { niche };
   })
   .handler(async ({ data }): Promise<NicheReport> => {
-    // Hosted on Lovable: use the built-in AI. Hosted elsewhere (e.g. Vercel): use OPENAI_API_KEY.
+    // A supplied provider key takes precedence on every host.
     const lovableKey = process.env['LOVABLE_API_KEY'];
     const openaiKey = process.env['OPENAI_API_KEY'];
-    if (!lovableKey && !openaiKey)
-      throw new Error("AI is not configured. Add OPENAI_API_KEY to your hosting environment variables.");
+    const provider = selectAiProvider({ openai: openaiKey, lovable: lovableKey });
     const common = {
       stream: true,
       store: false,
@@ -77,12 +77,12 @@ export const analyzeNiche = createServerFn({ method: "POST" })
       input: `INPUT NICHE TO ANALYZE: ${data.niche}`,
       text: { format: { type: "json_schema", name: "niche_report", strict: true, schema } },
     };
-    const res = lovableKey
+    const res = provider === "lovable"
       ? await fetch("https://ai.gateway.lovable.dev/v1/responses", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Lovable-API-Key": lovableKey,
+             "Lovable-API-Key": lovableKey ?? "",
             "X-Lovable-AIG-SDK": "fetch",
           },
           body: JSON.stringify({ model: "openai/gpt-6-astra", reasoning: { effort: "low" }, ...common }),
@@ -239,11 +239,9 @@ async function googleDocsTarget(): Promise<{ GATEWAY: string; headers: Record<st
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": gd },
     };
   }
-  const clientId = process.env['GOOGLE_CLIENT_ID'];
-  const clientSecret = process.env['GOOGLE_CLIENT_SECRET'];
-  const refreshToken = process.env['GOOGLE_REFRESH_TOKEN'];
+   const { clientId, clientSecret, refreshToken } = resolveGoogleCredentials(process.env);
   if (!clientId || !clientSecret || !refreshToken)
-    throw new Error("Google Docs is not connected. Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REFRESH_TOKEN to your hosting environment variables.");
+     throw new Error("Google Docs needs Google account authorization. Add GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET and GOOGLE_REFRESH_TOKEN in your hosting environment, then redeploy. The client ID and secret alone cannot access your documents.");
   const tok = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },

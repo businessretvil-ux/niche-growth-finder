@@ -1,5 +1,9 @@
 # Roadmap
 
+- [x] Use the supplied OpenAI key and Google OAuth credential names
+- [x] Verify a real niche analysis with the supplied OpenAI key
+- [ ] Enable Google Docs on Vercel (requires Google refresh token and Vercel environment setup)
+
 - [x] Apollo URL keyword reader (paste URL → extract niche keywords)
 - [x] Market size in billions in the detailed report + Google Doc
 - [x] Apollo filter links default to United States location
