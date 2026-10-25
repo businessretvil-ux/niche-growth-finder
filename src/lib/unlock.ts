@@ -42,8 +42,3 @@ export function persistUnlock() {
 export function couponValid(code: string): boolean {
   return code.trim().toLowerCase() === COUPON;
 }
-
-export const STUDENT_ID = "5312323";
-export function studentIdValid(id: string): boolean {
-  return id.trim() === STUDENT_ID;
-}
