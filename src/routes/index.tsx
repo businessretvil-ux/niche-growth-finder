@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { analyzeNiche, createNicheDoc } from "@/lib/niche.functions";
 import { judgeNiche, MIN_TICKET_USD } from "@/lib/niche-rules";
 import { buildApolloUrl, isApolloUrl, parseApolloKeywords } from "@/lib/apollo";
-import { persistUnlock, readUnlocked } from "@/lib/unlock";
+import { persistUnlock, readUnlocked, studentIdValid } from "@/lib/unlock";
 import { SiteHeader, SiteFooter } from "@/components/chrome";
 import { BlurLock, UnlockOverlay } from "@/components/locked";
 import type { NicheReport } from "@/lib/niche-types";
