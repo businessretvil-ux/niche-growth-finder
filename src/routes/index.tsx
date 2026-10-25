@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { analyzeNiche, createNicheDoc } from "@/lib/niche.functions";
 import { judgeNiche, MIN_TICKET_USD } from "@/lib/niche-rules";
 import { buildApolloUrl, isApolloUrl, parseApolloKeywords } from "@/lib/apollo";
-import { persistUnlock, readUnlocked, studentIdValid } from "@/lib/unlock";
+import { persistUnlock, readUnlocked } from "@/lib/unlock";
 import { SiteHeader, SiteFooter } from "@/components/chrome";
 import { BlurLock, UnlockOverlay } from "@/components/locked";
 import type { NicheReport } from "@/lib/niche-types";
@@ -45,21 +45,11 @@ function Index() {
     return () => clearInterval(t);
   }, [loading]);
 
-  const [idOpen, setIdOpen] = useState(false);
-  const [studentId, setStudentId] = useState("");
-  const [idError, setIdError] = useState<string | null>(null);
-
   function run(e: React.FormEvent) {
     e.preventDefault();
-    setStudentId(""); setIdError(null); setIdOpen(true);
-  }
-
-  function confirmId(e: React.FormEvent) {
-    e.preventDefault();
-    if (!studentIdValid(studentId)) { setIdError("That student ID isn't valid. Check it and try again."); return; }
-    setIdOpen(false);
     void doAnalyze();
   }
+
 
   async function doAnalyze() {
     setLoading(true); setError(null); setReport(null); setDoc(null); setApolloPaste("");
@@ -104,21 +94,6 @@ function Index() {
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">Type any niche. Get leads, ticket size, growth and which AI offers you can sell them.</p>
         </header>
 
-        {idOpen && (
-          <div role="dialog" aria-modal="true" aria-label="Enter student ID" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-sm">
-            <form onSubmit={confirmId} className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-left shadow-glow">
-              <p className="font-display text-lg font-bold text-foreground">Enter your student ID</p>
-              <p className="mt-1 text-sm text-muted-foreground">Only enrolled students can run an analysis.</p>
-              <input autoFocus value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="Student ID" inputMode="numeric"
-                className="mt-4 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:border-primary" />
-              {idError && <p className="mt-2 text-sm text-destructive">{idError}</p>}
-              <div className="mt-4 flex gap-2">
-                <button type="button" onClick={() => setIdOpen(false)} className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold">Cancel</button>
-                <button className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">Continue</button>
-              </div>
-            </form>
-          </div>
-        )}
         <form onSubmit={run} className="mx-auto flex max-w-2xl flex-col gap-3 rounded-3xl border border-border bg-card p-3 shadow-glow sm:flex-row">
           <input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="e.g. Cybersecurity MSPs, Roofing, Dental clinics…"
             className="flex-1 rounded-2xl bg-transparent px-4 py-3 text-lg outline-none placeholder:text-muted-foreground" />
