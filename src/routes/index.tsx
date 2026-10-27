@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
-import { analyzeNiche, createNicheDoc } from "@/lib/niche.functions";
+import { analyzeNiche, createNicheDoc, getGoogleClientId } from "@/lib/niche.functions";
+import { getGoogleAccessToken } from "@/lib/google-signin";
 import { judgeNiche, MIN_TICKET_USD } from "@/lib/niche-rules";
 import { buildApolloUrl, isApolloUrl, parseApolloKeywords } from "@/lib/apollo";
 import { persistUnlock, readUnlocked } from "@/lib/unlock";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const analyze = useServerFn(analyzeNiche);
   const makeDoc = useServerFn(createNicheDoc);
+  const fetchClientId = useServerFn(getGoogleClientId);
   const [niche, setNiche] = useState("");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -73,7 +75,11 @@ function Index() {
   async function exportDoc() {
     if (!report || !verdict) return;
     setDocLoading(true); setError(null);
-    try { setDoc(await makeDoc({ data: { report, good: verdict.good, reasons: verdict.reasons } })); }
+    try {
+      const { clientId } = await fetchClientId();
+      const accessToken = await getGoogleAccessToken(clientId);
+      setDoc(await makeDoc({ data: { report, good: verdict.good, reasons: verdict.reasons, accessToken } }));
+    }
     catch (err) { setError(err instanceof Error ? err.message : "Couldn't create the doc"); }
     finally { setDocLoading(false); }
   }
@@ -180,7 +186,7 @@ function Index() {
                   {!doc ? (
                     <div className="text-center">
                       <button onClick={exportDoc} disabled={docLoading} className="rounded-2xl bg-primary px-7 py-3 font-display font-bold text-primary-foreground transition hover:scale-[1.02] disabled:opacity-50">
-                        {docLoading ? "Creating doc…" : "Create Google Doc"}
+                        {docLoading ? "Creating doc…" : "Sign in with Google & create doc"}
                       </button>
                     </div>
                   ) : (
