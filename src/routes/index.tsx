@@ -28,6 +28,8 @@ function Index() {
   const analyze = useServerFn(analyzeNiche);
   const makeDoc = useServerFn(createNicheDoc);
   const fetchClientId = useServerFn(getGoogleClientId);
+  const [googleClientId, setGoogleClientId] = useState("");
+  useEffect(() => { fetchClientId().then((r) => setGoogleClientId(r.clientId)).catch(() => {}); }, [fetchClientId]);
   const [niche, setNiche] = useState("");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -76,8 +78,7 @@ function Index() {
     if (!report || !verdict) return;
     setDocLoading(true); setError(null);
     try {
-      const { clientId } = await fetchClientId();
-      const accessToken = await getGoogleAccessToken(clientId);
+      const accessToken = await getGoogleAccessToken(googleClientId);
       setDoc(await makeDoc({ data: { report, good: verdict.good, reasons: verdict.reasons, accessToken } }));
     }
     catch (err) { setError(err instanceof Error ? err.message : "Couldn't create the doc"); }
