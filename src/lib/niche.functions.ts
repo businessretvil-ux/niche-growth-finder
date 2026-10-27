@@ -263,13 +263,20 @@ async function googleDocsTarget(): Promise<{ GATEWAY: string; headers: Record<st
   };
 }
 
+export const getGoogleClientId = createServerFn({ method: "GET" }).handler(async () => {
+  const id = (process.env['GOOGLE_OAUTH_CLIENT_ID'] || process.env['GOOGLE_CLIENT_ID'] || "").trim();
+  return { clientId: id };
+});
+
 export const createNicheDoc = createServerFn({ method: "POST" })
-  .inputValidator((input: { report: NicheReport; good: boolean; reasons: string[] }) => {
+  .inputValidator((input: { report: NicheReport; good: boolean; reasons: string[]; accessToken?: string }) => {
     if (!input?.report?.niche) throw new Error("Missing report.");
     return input;
   })
   .handler(async ({ data }) => {
-    const { GATEWAY, headers } = await googleDocsTarget();
+    const { GATEWAY, headers } = data.accessToken
+      ? { GATEWAY: "https://docs.googleapis.com/v1", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.accessToken}` } as Record<string, string> }
+      : await googleDocsTarget();
     const created = await fetch(`${GATEWAY}/documents`, {
       method: "POST",
       headers,
